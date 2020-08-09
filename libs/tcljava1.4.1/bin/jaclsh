@@ -1,0 +1,85 @@
+#!/bin/sh
+# Wrapper script to start up Jacl
+if test "1" = "1" ; then
+if (uname -s | grep MINGW > /dev/null) ; then
+    no=op ;
+else
+    echo "Must be run from msys shell" ;
+    exit 1 ;
+fi
+fi
+
+# Do not edit this script unless it is called jaclsh.in.
+# configure takes jaclsh.in, substitutes the @xx@
+# fields and creates jaclsh.
+
+# Author:  Moses DeJong
+# Version: @(#)jaclsh.in	1.1 08/07/98
+#
+# Copyright (c) 1998, 1999, 2000 Moses DeJong
+# All Rights Reserved, see license.terms for license information.
+
+# Install prefix for jacl package, defaults to /usr/local
+prefix=/c/jacl141
+
+# Tcl/Java version number
+TCLJAVA_VERSION=1.4.1
+
+# Directory where platform independent files live. This
+# includes the .jar files and any .tcl files
+XP_TCLJAVA_INSTALL_DIR=${prefix}/lib/tcljava${TCLJAVA_VERSION}
+
+# Add the .jar library files to the CLASSPATH
+JACL_CLASSPATH=:${XP_TCLJAVA_INSTALL_DIR}/tcljava.jar
+JACL_CLASSPATH=${JACL_CLASSPATH}:${XP_TCLJAVA_INSTALL_DIR}/jacl.jar
+JACL_CLASSPATH=${JACL_CLASSPATH}:${XP_TCLJAVA_INSTALL_DIR}/itcl.jar
+JACL_CLASSPATH=${JACL_CLASSPATH}:${XP_TCLJAVA_INSTALL_DIR}/tjc.jar
+
+# Debug CLASSPATH used when atteching a debugger to Jacl.
+JACL_DEBUG_CLASSPATH=${JACL_CLASSPATH}:${XP_TCLJAVA_INSTALL_DIR}/tcljavasrc.jar
+JACL_DEBUG_CLASSPATH=${JACL_DEBUG_CLASSPATH}:${XP_TCLJAVA_INSTALL_DIR}/jaclsrc.jar
+JACL_DEBUG_CLASSPATH=${JACL_DEBUG_CLASSPATH}:${XP_TCLJAVA_INSTALL_DIR}/itclsrc.jar
+JACL_DEBUG_CLASSPATH=${JACL_DEBUG_CLASSPATH}:${XP_TCLJAVA_INSTALL_DIR}/tjcsrc.jar
+JACL_DEBUG_CLASSPATH=${JACL_DEBUG_CLASSPATH}:${XP_TCLJAVA_INSTALL_DIR}/janino.jar
+JACL_DEBUG_CLASSPATH=${JACL_DEBUG_CLASSPATH}:${XP_TCLJAVA_INSTALL_DIR}/janinosrc.jar
+
+# Fully qualified path name of JVM executable
+JAVA=/c/j2sdk1.4.2_15/bin/java
+
+# The arguments to the JAVA command
+JAVA_FLAGS=" -ms5m -mx32m ${JAVA_FLAGS}"
+
+# If JACL_DEBUG is set to 1, start the java executable with
+# debug flags so that a Java debugger can attach to the Jacl process.
+# One can't typically run Jacl as a child in a debugger because
+# interactive Jacl requires a console.
+
+if test "${JACL_DEBUG}" = "1"; then
+    JAVA_FLAGS="${JAVA_FLAGS} -Xdebug -Xrunjdwp:transport=dt_socket,address=8757,server=y,suspend=y"
+    JACL_CLASSPATH=${JACL_DEBUG_CLASSPATH}
+
+    ATTACH="-attach 8757"
+    if test "${ATTACH}" != ""; then
+        echo "Attach to shell via $ATTACH"
+    fi
+fi
+
+# Run java with the args passed in from the calling environment
+# We must set the CLASSPATH env var instead of using the -classpath
+# argument because jacl might want to exec a program that also
+# depends on the CLASSPATH setting and Java can not export env vars
+
+CLASSPATH=${JACL_CLASSPATH}:${CLASSPATH}
+export CLASSPATH
+
+# If JACL_MAIN is set then use it as the name of the Java
+# class to execute. If it is not set, then use tcl.lang.Shell.
+# This provides an easy way to launch an alternative shell
+# without having to duplicate all the CLASSPATH and JAVA logic.
+
+if test "${JACL_MAIN}" = ""; then
+    JACL_MAIN=tcl.lang.Shell
+fi
+
+exec ${JAVA} ${JAVA_FLAGS} ${JACL_MAIN} ${1+"$@"}
+
