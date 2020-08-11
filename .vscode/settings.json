@@ -1,0 +1,8 @@
+{
+    "java.project.referencedLibraries": [
+        "lib/**/*.jar",
+        "libs/tcljava1.4.1/lib/tcljava.jar",
+        "libs/tcljava1.4.1/lib/jacl.jar",
+        "libs/ipworks20/ipworks.jar"
+    ]
+}
